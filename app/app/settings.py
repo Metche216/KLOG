@@ -27,7 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
     'user',
-    'rest_framework.authtoken',
+    'rest_framework.authtoken', # do not FARGETTTTTTTT to add authtoken to installed apps...
 ]
 
 MIDDLEWARE = [
