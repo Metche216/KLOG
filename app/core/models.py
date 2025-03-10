@@ -5,6 +5,7 @@ from django.utils.translation import gettext as _
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
+    PermissionsMixin,
 )
 
 class UserManager(BaseUserManager):
@@ -29,7 +30,7 @@ class UserManager(BaseUserManager):
 
         return user
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, PermissionsMixin):
     """ User Model """
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
@@ -39,3 +40,4 @@ class User(AbstractBaseUser):
     objects = UserManager()
     
     USERNAME_FIELD = 'email'
+
