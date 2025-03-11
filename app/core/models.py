@@ -41,3 +41,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     USERNAME_FIELD = 'email'
 
+
+class Tournament(models.Model):
+    """ A model to represent tournament's structure """
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
