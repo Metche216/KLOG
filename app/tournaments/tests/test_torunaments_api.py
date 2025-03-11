@@ -6,11 +6,27 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 from tournaments.serializers import TournamentSerializer
-from core.models import Tournament
+from core.models import Tournament, TEvent
 
 
 TOURNAMENT_URL = reverse('tournament:tournament-list')
+TEVENT_URL = reverse('tevent:create')
 
+def create_tevent(user, **params ):
+    """ Create and return a tournament event instance """
+    tournament = Tournament.objects.create(name='Ranking')
+    defaults = {
+        'name': 'Padel Las Palmas',
+        'sport': 'Padel',
+        'start_date': '17-05-2025',
+        'end_date': '25-10-2025',
+        'status': 'open',
+        'tournament': tournament,
+    }
+
+    defaults.update(params)
+    tevent = TEvent.objects.create(user=user, **defaults)
+    return tevent
 
 class PublicTournamentAPITests(TestCase):
     """ Tests tournaments API for unauthenticated users """
@@ -52,4 +68,8 @@ class PrivateTournamentAPITests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_create_new_tevent(self):
+        """ Test creation of a tournament instance for authorized users """
+        create_tevent(user=self.user)
+        res = self.client.post()
     

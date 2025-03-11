@@ -50,3 +50,23 @@ class Tournament(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+class TEvent(models.Model):
+    """ A model for tournament instances """
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='tevent')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, unique=True)
+    sport = models.CharField(max_length=255)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    status = models.CharField(max_length=20, choices=[
+        ("open", "Open"),
+        ("in_progress", "In progress"),
+        ("completed", "Completed")
+    ], default= "open")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.name} - ({self.tournament.name})'
+
