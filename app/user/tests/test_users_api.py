@@ -95,3 +95,30 @@ class PublicUsersAPITests(TestCase):
         res = self.client.get(PROFILE_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PrivateUsersAPITests(TestCase):
+    """ Tests for functionality on authenticated users """
+
+    def setUp(self):
+        self.user = create_new_user(email='test@example.com', password='abc123', name='Test User')
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def test_allow_retrieve_profile(self):
+        """ Test retrieving profile from logged user """
+        res = self.client.get(PROFILE_URL)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+    
+    def test_update_user_profile_info(self):
+        """ Tests updating user profile is successfull"""
+        payload = {
+            'name': 'Another name',
+            'password':'new_password'
+        }
+
+        res = self.client.patch(PROFILE_URL, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['name'], payload['name'])
