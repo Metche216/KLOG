@@ -9,7 +9,7 @@ from tournaments import views
 
 router = DefaultRouter()
 router.register('tournaments', views.TournamentsViewset)
-router.register('tevent')
+router.register('tevent', views.TEventViewset)
 
 app_name = 'tournament'
 

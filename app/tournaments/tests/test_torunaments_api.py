@@ -5,12 +5,12 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from tournaments.serializers import TournamentSerializer
+from tournaments.serializers import TournamentSerializer, TEventSerializer
 from core.models import Tournament, TEvent
 
 
 TOURNAMENT_URL = reverse('tournament:tournament-list')
-TEVENT_URL = reverse('tevent:create')
+TEVENT_URL = reverse('tournament:tevent-list')
 
 def create_tevent(user, **params ):
     """ Create and return a tournament event instance """
@@ -18,14 +18,14 @@ def create_tevent(user, **params ):
     defaults = {
         'name': 'Padel Las Palmas',
         'sport': 'Padel',
-        'start_date': '17-05-2025',
-        'end_date': '25-10-2025',
+        'start_date': '2025-05-17',
+        'end_date': '2025-10-25',
         'status': 'open',
         'tournament': tournament,
     }
 
     defaults.update(params)
-    tevent = TEvent.objects.create(user=user, **defaults)
+    tevent = TEvent.objects.create(created_by=user, **defaults)
     return tevent
 
 class PublicTournamentAPITests(TestCase):
@@ -33,25 +33,25 @@ class PublicTournamentAPITests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-    
+
     def test_retrieve_tournaments_unauthorized(self):
         """ Tests tournaments are available only for authenticated users """
         res = self.client.get(TOURNAMENT_URL)
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    
+
 class PrivateTournamentAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(email='Test@example.com', name='Test User', password='abc123pass')
         self.client.force_authenticate(user=self.user)
-    
+
     def test_retrieve_tournaments_successfull(self):
         """ Test list of tournaments for authenticated users """
         tournament1 = Tournament.objects.create(name='Padel')
         tournament2 = Tournament.objects.create(name='Tennis')
-                
+
         res = self.client.get(TOURNAMENT_URL)
         tournaments = Tournament.objects.all()
         serializer = TournamentSerializer(tournaments, many=True)
@@ -69,7 +69,27 @@ class PrivateTournamentAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_create_new_tevent(self):
-        """ Test creation of a tournament instance for authorized users """
-        create_tevent(user=self.user)
-        res = self.client.post()
+        """ Test creation of a tournament event """
+        tevent = create_tevent(user=self.user)
+        self.assertEqual(tevent.created_by, self.user)
+        self.assertEqual(tevent.tournament.name, 'Ranking')
     
+    def test_create_new_tevent_API(self):
+        """ Test creating a new tournament event through API """
+        t = Tournament.objects.create(name='Super Copa')
+        
+        payload = {
+            'tournament':f'{t.id}',
+            'sport': 'Football',
+            'name': 'TorneoCorto'
+        }
+        print('payload.tour: ',payload['tournament'])
+        res = self.client.post(TEVENT_URL, payload)
+        
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        tevent = TEvent.objects.get(id=res.data['id'])
+        for k,v in payload.items():
+            if k != 'tournament':
+                self.assertEqual(getattr(tevent,k),v)
+
+        
