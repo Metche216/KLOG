@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from rest_framework import serializers
 
 from core.models import Tournament, TEvent
@@ -17,15 +19,15 @@ class TEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TEvent
-        fields = ['id', 'name', 'sport', 'tournament']
-        
+        fields = ['id', 'name', 'sport', 'tournament', 'start_date']
         read_only_fields = ['id']
 
     def create(self, validated_data):
         """ Create a tournament event """
-        tournament = validated_data['tournament']
-        print(tournament)
-        t = Tournament.objects.get(name=tournament)
-        validated_data.pop('tournament')
-        tevent = TEvent.objects.create(tournament=t, **validated_data)
+        t = validated_data.pop('tournament')
+        start = validated_data.pop('start_date',None)
+        end = validated_data.pop('end_date',None)
+        tevent = TEvent.objects.create(tournament=t, start_date=start, **validated_data)
+        if start is None:
+            tevent.start_date = timezone.now()
         return tevent

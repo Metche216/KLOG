@@ -19,11 +19,11 @@ class TournamentsViewset(viewsets.ModelViewSet):
     def get_permissions(self):
         """ Instantiates and returns the list of permissions that this view requires. """
         if self.action != 'list':
-            permission_classes = [IsAdminUser]    
+            permission_classes = [IsAdminUser]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
-                
+
 
 class TEventViewset(viewsets.ModelViewSet):
     """ Views to manage the TEvents API """
@@ -35,5 +35,4 @@ class TEventViewset(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """ Override the default ModelViewSet create method """
         serializer.save(created_by=self.request.user)
-        
-    
+

@@ -73,23 +73,23 @@ class PrivateTournamentAPITests(TestCase):
         tevent = create_tevent(user=self.user)
         self.assertEqual(tevent.created_by, self.user)
         self.assertEqual(tevent.tournament.name, 'Ranking')
-    
+
     def test_create_new_tevent_API(self):
-        """ Test creating a new tournament event through API """
+        """ Test creating a new tournament EVENT through API """
         t = Tournament.objects.create(name='Super Copa')
-        
+
         payload = {
             'tournament':f'{t.id}',
             'sport': 'Football',
-            'name': 'TorneoCorto'
+            'name': 'TorneoCorto',
+            'start_date': '2025-05-17',
+            'end_date': '2025-06-17'
         }
-        print('payload.tour: ',payload['tournament'])
+
         res = self.client.post(TEVENT_URL, payload)
-        
+
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         tevent = TEvent.objects.get(id=res.data['id'])
         for k,v in payload.items():
             if k != 'tournament':
                 self.assertEqual(getattr(tevent,k),v)
-
-        

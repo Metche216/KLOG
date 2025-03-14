@@ -14,13 +14,13 @@ class UserManager(BaseUserManager):
         """ Create and return a new user """
         if not email:
             raise ValueError(_('User must have an email address.'))
-        
+
         user = self.model(email=self.normalize_email(email),**extra_fields)
         user.set_password(password)
         user.save(using=self._db)
-        
+
         return user
-    
+
     def create_superuser(self, email, password):
         """Create and return a new superuser"""
         user = self.create_user(email, password)
@@ -36,9 +36,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    
+
     objects = UserManager()
-    
+
     USERNAME_FIELD = 'email'
 
 
@@ -50,7 +50,7 @@ class Tournament(models.Model):
 
     def __str__(self):
         return self.name
-    
+
 
 class TEvent(models.Model):
     """ A model for tournament instances """
@@ -58,8 +58,8 @@ class TEvent(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, unique=True)
     sport = models.CharField(max_length=255)
-    start_date = models.DateField(null=True)
-    end_date = models.DateField(null=True)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=[
         ("open", "Open"),
         ("in_progress", "In progress"),
