@@ -3,7 +3,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now as tzn
-from core.models import Tournament, TEvent, Player
+from core.models import Tournament, TEvent, Player, Team
 
 def create_user(email, password):
     """ Create and return a new user """
@@ -55,3 +55,20 @@ class ModelsTests(TestCase):
 
         self.assertEqual(players.count(),1)
         self.assertTrue(Player.objects.filter(user=self.user).exists())
+
+    def create_new_team_and_assign_players(self):
+        """ Test creating a new team and assigning players to it """
+        t = Tournament.objects.create(name='Escalerilla')
+        player1 = Player.objects.create(user=self.user, tournament=t)
+        user2 = create_user('user2@example.com', 'pass123')
+        player2 = Player.objects.create(user=user2, tournament=t)
+
+        new_team = Team.objects.create()
+        players = [player1, player2]
+        for player in players:
+            new_team.players.add(player)
+        new_team.save()
+
+
+        self.assertEqual(new_team.players.count(), 2)
+
