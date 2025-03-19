@@ -1,6 +1,9 @@
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from rest_framework import serializers
+
+
 
 from core.models import Tournament, TEvent
 
@@ -19,15 +22,21 @@ class TEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TEvent
-        fields = ['id', 'name', 'sport', 'tournament', 'start_date']
+        fields = ['id', 'name', 'sport', 'tournament', 'start_date','end_date']
         read_only_fields = ['id']
+
+    def validate(self, data):
+        """ Check that end_date is not before start_date. """
+        start_date = data['start_date']
+        end_date = data['end_date']
+
+        if end_date < start_date:
+            raise serializers.ValidationError(_("'End date' must be greater than or equal to 'start date'"))
+        return data
 
     def create(self, validated_data):
         """ Create a tournament event """
         t = validated_data.pop('tournament')
-        start = validated_data.pop('start_date',None)
-        end = validated_data.pop('end_date',None)
-        tevent = TEvent.objects.create(tournament=t, start_date=start, **validated_data)
-        if start is None:
-            tevent.start_date = timezone.now()
+        tevent = TEvent.objects.create(tournament=t, **validated_data)
+
         return tevent

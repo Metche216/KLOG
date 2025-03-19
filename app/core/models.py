@@ -58,8 +58,8 @@ class TEvent(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, unique=True)
     sport = models.CharField(max_length=255)
-    start_date = models.DateField(blank=True, null=True)
-    end_date = models.DateField(blank=True, null=True)
+    start_date = models.DateField(blank=False, null=False)
+    end_date = models.DateField(blank=False, null=False)
     status = models.CharField(max_length=20, choices=[
         ("open", "Open"),
         ("in_progress", "In progress"),
@@ -70,3 +70,8 @@ class TEvent(models.Model):
     def __str__(self):
         return f'{self.name} - ({self.tournament.name})'
 
+
+class Player(models.Model):
+    """ A model for the tournament player """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='player')
