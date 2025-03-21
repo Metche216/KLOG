@@ -7,7 +7,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 from tournaments.serializers import TournamentSerializer, TEventSerializer
-from core.models import Tournament, TEvent
+from core.models import Tournament, TEvent, BasePlayer
 
 
 TOURNAMENT_URL = reverse('tournament:tournament-list')
@@ -15,7 +15,7 @@ TEVENT_URL = reverse('tournament:tevent-list')
 
 def create_tevent(user, **params ):
     """ Create and return a tournament event instance """
-    tournament = Tournament.objects.create(name='Ranking')
+    tournament = Tournament.objects.create(name='Ranking', teams_n=2)
     defaults = {
         'name': 'Padel Las Palmas',
         'sport': 'Padel',
@@ -46,12 +46,13 @@ class PrivateTournamentAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(email='Test@example.com', name='Test User', password='abc123pass')
+        BasePlayer.objects.create(user=self.user)
         self.client.force_authenticate(user=self.user)
 
     def test_retrieve_tournaments_successfull(self):
         """ Test list of tournaments for authenticated users """
-        tournament1 = Tournament.objects.create(name='Padel')
-        tournament2 = Tournament.objects.create(name='Tennis')
+        tournament1 = Tournament.objects.create(name='Padel', teams_n=2)
+        tournament2 = Tournament.objects.create(name='Tennis', teams_n=2)
 
         res = self.client.get(TOURNAMENT_URL)
         tournaments = Tournament.objects.all()
@@ -77,7 +78,7 @@ class PrivateTournamentAPITests(TestCase):
 
     def test_create_new_tevent_API(self):
         """ Test creating a new tournament EVENT through API """
-        t = Tournament.objects.create(name='Super Copa')
+        t = Tournament.objects.create(name='Super Copa', teams_n=2)
 
         payload = {
             'tournament':f'{t.id}',
@@ -97,7 +98,7 @@ class PrivateTournamentAPITests(TestCase):
                     fecha = getattr(tevent, k).strftime('%Y-%m-%d')
     def test_create_new_tevent_API(self):
         """ Test creating a new tournament EVENT through API """
-        t = Tournament.objects.create(name='Super Copa')
+        t = Tournament.objects.create(name='Super Copa', teams_n=2)
 
         payload = {
             'tournament':f'{t.id}',
@@ -123,7 +124,7 @@ class PrivateTournamentAPITests(TestCase):
 
     def test_create_new_tevent_without_end_date_fails(self):
         """" Test creating open tevents without end_date fails """
-        t = Tournament.objects.create(name='Super Copa')
+        t = Tournament.objects.create(name='Super Copa', teams_n=2)
 
         payload = {
             'tournament':f'{t.id}',
@@ -139,8 +140,7 @@ class PrivateTournamentAPITests(TestCase):
 
     def test_end_date_is_sooner_than_start_date(self):
         """ Test dates in a tevent are according """
-        t = Tournament.objects.create(name='Super Copa')
-
+        t = Tournament.objects.create(name='Super Copa', teams_n=2)
         payload = {
             'tournament':f'{t.id}',
             'sport': 'Football',
@@ -151,5 +151,4 @@ class PrivateTournamentAPITests(TestCase):
 
         res = self.client.post(TEVENT_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
 

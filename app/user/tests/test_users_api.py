@@ -5,6 +5,8 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
+from core.models import BasePlayer
+
 from rest_framework.test import APIClient
 from rest_framework import status
 
@@ -19,10 +21,10 @@ def create_new_user(**params):
 
 class PublicUsersAPITests(TestCase):
     """ Tests public features of the users API """
-    
+
     def setUp(self):
         self.client = APIClient()
-    
+
     def test_create_new_user(self):
         """ Create a new user successfully """
         user = create_new_user(email='test@example.com', password='123qwerty')
@@ -34,15 +36,31 @@ class PublicUsersAPITests(TestCase):
             'email': 'test@example.com',
             'password': '123qwerty',
             'name': 'User Name'
-        }        
+        }
         res = self.client.post(CREATE_USER_URL, payload)
-        
+
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.data['email'], payload['email'])
         user = get_user_model().objects.get(email=payload['email']) #gets the user from db
         self.assertTrue(user.check_password(payload['password']))   #checks if the users pasword matches the payload encrypted password
         self.assertNotIn('password', res.data)                      #checks that the password is not returned.
-        
+
+    def test_creating_new_user_creates_users_player(self):
+        """ Tests player creation upon user creation """
+        payload = {
+            'email': 'test@example.com',
+            'password': '123qwerty',
+            'name': 'User Name'
+        }
+        res = self.client.post(CREATE_USER_URL, payload)
+
+        user = get_user_model().objects.get(email=payload['email'])
+        player = BasePlayer.objects.get(user=user)
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(player.name, payload['name'])
+
+
     def test_user_with_email_exists(self):
         """ Test if a user email already exists """
         get_user_model().objects.create_user(email='test@example.com', password='pass123')
@@ -53,7 +71,7 @@ class PublicUsersAPITests(TestCase):
         }
         res = self.client.post(CREATE_USER_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-        
+
     def test_create_token_for_user(self):
         """ Test creating a new token successfully"""
         user_data = {
@@ -61,7 +79,7 @@ class PublicUsersAPITests(TestCase):
             'password': '123qwerty',
             'name': 'User Name'
         }
-        
+
         create_new_user(**user_data)
         payload = {
             'email': user_data['email'],
@@ -110,7 +128,7 @@ class PrivateUsersAPITests(TestCase):
         res = self.client.get(PROFILE_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-    
+
     def test_update_user_profile_info(self):
         """ Tests updating user profile is successfull"""
         payload = {

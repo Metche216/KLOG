@@ -47,6 +47,8 @@ class Tournament(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    players = models.ManyToManyField('BasePlayer')
+    teams_n = models.IntegerField()
 
     def __str__(self):
         return self.name
@@ -71,7 +73,36 @@ class TEvent(models.Model):
         return f'{self.name} - ({self.tournament.name})'
 
 
-class Player(models.Model):
-    """ A model for the tournament player """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='player')
+class BasePlayer(models.Model):
+    """ A model for a tournament general player """
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='baseplayer')
+    name = models.CharField(max_length=255, null=True)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def name(self):
+        return self.user.name
+
+
+class TournamentPlayer(models.Model):
+    """ A generic model for the tournament players """
+    player = models.ForeignKey('BasePlayer', on_delete=models.CASCADE)
+    tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('player', 'tournament')
+
+    def __str__(self):
+        return f'{self.player.user.name}'
+
+
+class Team(models.Model):
+    """ Model representation for the teams """
+    name = models.CharField(max_length=100)
+    players = models.ManyToManyField('TournamentPlayer', related_name='teams')
+    tevent = models.ForeignKey(TEvent, on_delete=models.CASCADE, related_name='teams')
+
+    def __str__(self):
+        return self.name
