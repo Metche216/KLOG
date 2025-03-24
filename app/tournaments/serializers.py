@@ -40,3 +40,7 @@ class TEventSerializer(serializers.ModelSerializer):
         tevent = TEvent.objects.create(tournament=t, **validated_data)
 
         return tevent
+
+    def update(self, instance, validated_data):
+        """ Update the tevent """
+        pass

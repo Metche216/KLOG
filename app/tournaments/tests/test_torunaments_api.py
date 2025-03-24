@@ -13,6 +13,10 @@ from core.models import Tournament, TEvent, BasePlayer
 TOURNAMENT_URL = reverse('tournament:tournament-list')
 TEVENT_URL = reverse('tournament:tevent-list')
 
+def create_user(email, password):
+    """ Create and return a new user """
+    return get_user_model().objects.create_user(email=email, password=password)
+
 def create_tevent(user, **params ):
     """ Create and return a tournament event instance """
     tournament = Tournament.objects.create(name='Ranking', teams_n=2)
@@ -88,26 +92,6 @@ class PrivateTournamentAPITests(TestCase):
             'end_date': '2025-06-17'
         }
 
-        res = self.client.post(TEVENT_URL, payload)
-
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        tevent = TEvent.objects.get(id=res.data['id'])
-        for k,v in payload.items():
-            if k != 'tournament':
-                if 'date' in k:
-                    fecha = getattr(tevent, k).strftime('%Y-%m-%d')
-    def test_create_new_tevent_API(self):
-        """ Test creating a new tournament EVENT through API """
-        t = Tournament.objects.create(name='Super Copa', teams_n=2)
-
-        payload = {
-            'tournament':f'{t.id}',
-            'sport': 'Football',
-            'name': 'TorneoCorto',
-            'start_date': '2025-05-17',
-            'end_date': '2025-06-17'
-        }
-
         res = self.client.post(TEVENT_URL, payload, format='json')
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -152,3 +136,34 @@ class PrivateTournamentAPITests(TestCase):
         res = self.client.post(TEVENT_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_player_assambly_for_tevent(self):
+        """ Test retrieving selected players for the tevnet"""
+        t = Tournament.objects.create(name='Padel Ranking', teams_n=2)
+        user2 = create_user(email='test2@example.com', password='abc123pass')
+        BasePlayer.objects.create(user=user2)
+
+        t.players.add(user2.baseplayer)
+        t.players.add(self.user.baseplayer)
+
+        self.assertEqual(t.players.count(), 2)
+
+        tevent = create_tevent(user=self.user)
+
+        payload = {
+            'tournament': f'{tevent.id}',
+            'players': f'{self.user.baseplayer.id}, {user2.baseplayer.id}'
+        }
+
+        # detail url missing... trying to patch the whole queryset.
+
+        res = self.client.patch(TEVENT_URL, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        tevent.refresh_from_db()
+        self.assertEqual(tevent.players.count(), 2)
+
+
+
+    def test_limit_team_members_to_class_parameters(self):
+        """ Test the max_players complies with class parameter """
+        pass
