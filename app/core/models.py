@@ -62,6 +62,7 @@ class TEvent(models.Model):
     sport = models.CharField(max_length=255)
     start_date = models.DateField(blank=False, null=False)
     end_date = models.DateField(blank=False, null=False)
+    players = models.ManyToManyField('TournamentPlayer')
     status = models.CharField(max_length=20, choices=[
         ("open", "Open"),
         ("in_progress", "In progress"),
@@ -88,7 +89,7 @@ class BasePlayer(models.Model):
 
 class TournamentPlayer(models.Model):
     """ A generic model for the tournament players """
-    player = models.ForeignKey('BasePlayer', on_delete=models.CASCADE)
+    player = models.ForeignKey('BasePlayer', on_delete=models.CASCADE, related_name='tplayer')
     tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE)
 
     class Meta:

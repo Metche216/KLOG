@@ -2,10 +2,9 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from rest_framework import serializers
+from rest_framework.relations import PrimaryKeyRelatedField
 
-
-
-from core.models import Tournament, TEvent
+from core.models import Tournament, TEvent, TournamentPlayer, BasePlayer
 
 class TournamentSerializer(serializers.ModelSerializer):
     """ Tournament serializer """
@@ -17,20 +16,36 @@ class TournamentSerializer(serializers.ModelSerializer):
 
     # In the serializer we define the methods that will be available
 
+
+class TournamentPlayerSerializer(serializers.ModelSerializer):
+    """ Serializer for the tournament players"""
+    class Meta:
+        model = TournamentPlayer
+        fields = ['id', 'player']
+        read_only_fields = ['id']
+
+
+
 class TEventSerializer(serializers.ModelSerializer):
-    """ Tournament Events Serializer"""
+    """Tournament Events Serializer"""
+    players = PrimaryKeyRelatedField(
+        many=True,
+        queryset=BasePlayer.objects.all(),  # Importante: Define el queryset
+        required=False
+    )
 
     class Meta:
         model = TEvent
-        fields = ['id', 'name', 'sport', 'tournament', 'start_date','end_date']
+        fields = ['id', 'name', 'sport', 'tournament', 'start_date','end_date', 'players']
         read_only_fields = ['id']
 
     def validate(self, data):
-        """ Check that end_date is not before start_date. """
-        start_date = data['start_date']
-        end_date = data['end_date']
+        """ Validate serializer data before processing """
+        
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
 
-        if end_date < start_date:
+        if start_date and end_date and end_date < start_date:
             raise serializers.ValidationError(_("'End date' must be greater than or equal to 'start date'"))
         return data
 
@@ -42,5 +57,17 @@ class TEventSerializer(serializers.ModelSerializer):
         return tevent
 
     def update(self, instance, validated_data):
-        """ Update the tevent """
-        pass
+        """Update recipe."""
+        # Basic configuration for updating through serializer, loop through the values of the validated data and set them in the instance. 
+        players = validated_data.pop('players',None)
+        
+        if players is not None:
+            for player in players:
+                #player es una instancia de base player.... lpm ... 
+                print(player)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
