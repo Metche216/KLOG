@@ -21,9 +21,13 @@ def create_user(email, password, **kwargs):
     """ Create and return a new user """
     return get_user_model().objects.create_user(email=email, password=password, **kwargs)
 
+def create_tournament(name, **params):
+    tournament = Tournament.objects.create(name=name, **params)
+    return tournament
+
 def create_tevent(user, **params ):
     """ Create and return a tournament event instance """
-    tournament = Tournament.objects.create(name='Ranking', teams_n=2)
+    tournament = create_tournament(name='Ranking', teams_n=2)
     defaults = {
         'name': 'Padel Las Palmas',
         'sport': 'Padel',
@@ -70,8 +74,8 @@ class PrivateTournamentAPITests(TestCase):
 
     def test_retrieve_tournaments_successfull(self):
         """ Test list of tournaments for authenticated users """
-        tournament1 = Tournament.objects.create(name='Padel', teams_n=2)
-        tournament2 = Tournament.objects.create(name='Tennis', teams_n=2)
+        tournament1 = create_tournament(name='Padel', teams_n=2)
+        tournament2 = create_tournament(name='Tennis', teams_n=2)
 
         res = self.client.get(TOURNAMENT_URL)
         tournaments = Tournament.objects.all()
@@ -97,7 +101,7 @@ class PrivateTournamentAPITests(TestCase):
 
     def test_create_new_tevent_API(self):
         """ Test creating a new tournament EVENT through API """
-        t = Tournament.objects.create(name='Super Copa', teams_n=2)
+        t = create_tournament(name='Super Copa', teams_n=2)
 
         payload = {
             'tournament':f'{t.id}',
@@ -123,7 +127,7 @@ class PrivateTournamentAPITests(TestCase):
 
     def test_create_new_tevent_without_end_date_fails(self):
         """" Test creating open tevents without end_date fails """
-        t = Tournament.objects.create(name='Super Copa', teams_n=2)
+        t = create_tournament(name='Super Copa', teams_n=2)
 
         payload = {
             'tournament':f'{t.id}',
@@ -139,7 +143,7 @@ class PrivateTournamentAPITests(TestCase):
 
     def test_end_date_is_sooner_than_start_date(self):
         """ Test dates in a tevent are according """
-        t = Tournament.objects.create(name='Super Copa', teams_n=2)
+        t = create_tournament(name='Super Copa', teams_n=2)
         payload = {
             'tournament':f'{t.id}',
             'sport': 'Football',
@@ -188,8 +192,44 @@ class PrivateTournamentAPITests(TestCase):
         self.assertEqual(tevent.tournament.name, t.name)
         self.assertEqual(tevent.players.count(), 2)
 
+    def test_remove_players_from_a_tevent(self):
+        """ Test removing players from the tevent """
+        user2 = create_user(email='test2@example.com', name='Rolandito', password='abc123pass')
+        user3 = create_user(email='test3@example.com', name='Fabiancito', password='abc123pass')
+        tevent = create_tevent(user=self.user)
+        t = tevent.tournament
+        bp1 = self.user.baseplayer
+        bp2 = user2.baseplayer
+        bp3 = user3.baseplayer
+        t.players.add(bp1)
+        t.players.add(bp2)
+        t.players.add(bp3)
+        tplayer = TournamentPlayer.objects.create(player=bp1, tournament=t)
+        tplayer2 = TournamentPlayer.objects.create(player=bp2, tournament=t)
+        tplayer3 = TournamentPlayer.objects.create(player=bp3, tournament=t)
+        tplayer_list = [tplayer, tplayer2, tplayer3]
+        for player in tplayer_list:
+            tevent.players.add(player)
+        self.assertEqual(t.players.all().count() ,3 )
+        self.assertEqual(tevent.players.all().count(), 3)
+        
+        payload = {
+            'tournament': t.id,
+            'players': [bp1.id, bp2.id]
+        }
+        
+        url = detail_url(tevent.id)
+        res = self.client.patch(url, payload, format='json')
+        
+        self.assertEqual(res.status_code, 200)
+        tevent.refresh_from_db()
+        self.assertEqual(tevent.players.all().count(), 2)
 
+    def test_create_tournament_player_on_tournament_update(self):
+        """ Test the creation of tournament players when baseplayer is added to tournament """
+        t = create_tournament(name='Escalerilla', teams_n=2)
 
+        
     def test_limit_team_members_to_class_parameters(self):
         """ Test the max_players complies with class parameter """
         pass

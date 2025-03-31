@@ -11,7 +11,7 @@ class TournamentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tournament
-        fields = ['id', 'name', 'description']
+        fields = ['id', 'name', 'description', 'players']
         read_only_fields = ['id']
 
     # In the serializer we define the methods that will be available
@@ -43,8 +43,7 @@ class TEventSerializer(serializers.ModelSerializer):
         """ Returns the tournament player for each base player invited """
 
         player_obj, created = TournamentPlayer.objects.get_or_create(player=base_player, tournament=tevent.tournament)
-        if created:
-            tevent.players.add(player_obj)
+        tevent.players.add(player_obj)
 
 
     def validate(self, data):
@@ -65,11 +64,12 @@ class TEventSerializer(serializers.ModelSerializer):
         return tevent
 
     def update(self, instance, validated_data):
-        """Update recipe."""
+        """ Update tevent """
         # Basic configuration for updating through serializer, loop through the values of the validated data and set them in the instance.
         players = validated_data.pop('players',None)
-
+        print('players list: ', players)
         if players is not None:
+            instance.players.clear()
             for player in players:
                 self._get_or_create_tournament_player(instance, player)
 
