@@ -20,7 +20,7 @@ class TournamentsViewset(viewsets.ModelViewSet):
     def get_permissions(self):
         """ Instantiates and returns the list of permissions that this view requires. """
         if self.action != 'list':
-            permission_classes = [IsAdminUser]
+            permission_classes = [IsAuthenticated]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]

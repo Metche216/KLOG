@@ -67,7 +67,7 @@ class TEventSerializer(serializers.ModelSerializer):
         """ Update tevent """
         # Basic configuration for updating through serializer, loop through the values of the validated data and set them in the instance.
         players = validated_data.pop('players',None)
-        print('players list: ', players)
+
         if players is not None:
             instance.players.clear()
             for player in players:

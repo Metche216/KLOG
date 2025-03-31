@@ -12,6 +12,9 @@ from core.models import Tournament, TEvent, BasePlayer, TournamentPlayer
 
 TOURNAMENT_URL = reverse('tournament:tournament-list')
 TEVENT_URL = reverse('tournament:tevent-list')
+def tdetail_url(t_id):
+    """ Return the detailed url for a specific tournament """
+    return reverse('tournament:tournament-detail', args=[t_id])
 
 def detail_url(tevent_id):
     """ Return the detailed url for a specific tevent """
@@ -212,24 +215,35 @@ class PrivateTournamentAPITests(TestCase):
             tevent.players.add(player)
         self.assertEqual(t.players.all().count() ,3 )
         self.assertEqual(tevent.players.all().count(), 3)
-        
+
         payload = {
             'tournament': t.id,
             'players': [bp1.id, bp2.id]
         }
-        
+
         url = detail_url(tevent.id)
         res = self.client.patch(url, payload, format='json')
-        
+
         self.assertEqual(res.status_code, 200)
         tevent.refresh_from_db()
         self.assertEqual(tevent.players.all().count(), 2)
 
     def test_create_tournament_player_on_tournament_update(self):
         """ Test the creation of tournament players when baseplayer is added to tournament """
+        user2 = create_user(email='user2@example.com', name='Matias', password='usaerpass123')
         t = create_tournament(name='Escalerilla', teams_n=2)
+        bp1 = self.user.baseplayer
+        bp2 = user2.baseplayer
+        payload = {
+            'players':[bp1.id, bp2.id]
+        }
+        url = tdetail_url(t.id)
+        res = self.client.patch(url, payload, format='json')
+        print(res.json())
+        self.assertEqual(t.players.all().count(), 2)
+        all_Tplayers = TournamentPlayer.objects.all()
+        self.assertEqual(all_Tplayers.count(), 2)
 
-        
     def test_limit_team_members_to_class_parameters(self):
         """ Test the max_players complies with class parameter """
         pass
