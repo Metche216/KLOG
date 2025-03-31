@@ -23,7 +23,6 @@ class UserSerializer(ModelSerializer):
     def create(self, validated_data):
         """ create a new user with encrypted password """
         new_user = get_user_model().objects.create_user(**validated_data)
-        BasePlayer.objects.create(user=new_user)
         return new_user
 
 class AuthTokenSerializer(serializers.Serializer):

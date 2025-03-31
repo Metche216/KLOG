@@ -21,7 +21,7 @@ class TournamentPlayerSerializer(serializers.ModelSerializer):
     """ Serializer for the tournament players"""
     class Meta:
         model = TournamentPlayer
-        fields = ['id', 'player']
+        fields = ['id', 'player', 'tournament']
         read_only_fields = ['id']
 
 
@@ -39,9 +39,17 @@ class TEventSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'sport', 'tournament', 'start_date','end_date', 'players']
         read_only_fields = ['id']
 
+    def _get_or_create_tournament_player(self, tevent, base_player):
+        """ Returns the tournament player for each base player invited """
+
+        player_obj, created = TournamentPlayer.objects.get_or_create(player=base_player, tournament=tevent.tournament)
+        if created:
+            tevent.players.add(player_obj)
+
+
     def validate(self, data):
         """ Validate serializer data before processing """
-        
+
         start_date = data.get('start_date')
         end_date = data.get('end_date')
 
@@ -58,13 +66,13 @@ class TEventSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Update recipe."""
-        # Basic configuration for updating through serializer, loop through the values of the validated data and set them in the instance. 
+        # Basic configuration for updating through serializer, loop through the values of the validated data and set them in the instance.
         players = validated_data.pop('players',None)
-        
+
         if players is not None:
             for player in players:
-                #player es una instancia de base player.... lpm ... 
-                print(player)
+                self._get_or_create_tournament_player(instance, player)
+
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)

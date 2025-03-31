@@ -38,15 +38,15 @@ def create_tevent(user, **params ):
     return tevent
 
 def add_new_player_to_tournament(tournament, base_player):
-            """ 
-            Automatically creates a new player for a specific tournament 
+            """
+            Automatically creates a new player for a specific tournament
             *Arguments*
             tournament= from Tournament Model,
             base_player= from BasePlayer Model
 
             """
             tournament.players.add(base_player)
-            TournamentPlayer.objects.create(player=base_player, tournament=tournament)
+
 
 
 class PublicTournamentAPITests(TestCase):
@@ -66,7 +66,6 @@ class PrivateTournamentAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(email='Test@example.com', name='Test User', password='abc123pass')
-        BasePlayer.objects.create(user=self.user)
         self.client.force_authenticate(user=self.user)
 
     def test_retrieve_tournaments_successfull(self):
@@ -167,31 +166,23 @@ class PrivateTournamentAPITests(TestCase):
         """ Test retrieving selected players for the tevnet"""
         tevent = create_tevent(user=self.user)
         user2 = create_user(email='test2@example.com', name='Rolandito', password='abc123pass')
-        bp2 = BasePlayer.objects.create(user=user2)
+        bp2 = user2.baseplayer
         bp1 = self.user.baseplayer
         t = Tournament.objects.first()
-        print(Tournament.objects.all())
         player_list = [bp1, bp2]
         for player in player_list:
             add_new_player_to_tournament(t, player)
 
         self.assertIn(bp2, t.players.all())
         self.assertIn(bp1, t.players.all())
-        self.assertEqual(t.players.count(), 2)
-        self.assertEqual(TournamentPlayer.objects.all().count(),2)
 
-        example_tplayers = TournamentPlayer.objects.filter(tournament=t)
-                
         payload = {
             'tournament': t.id,
-            'players': [bp1.id, bp2.id]  # Envía los IDs de TournamentPlayer
+            'players': [bp1.id, bp2.id]
         }
-        
-        url = detail_url(tevent.id)
 
+        url = detail_url(tevent.id)
         res = self.client.patch(url, payload, format='json')
-    
-        print('the response',res.json())
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         tevent.refresh_from_db()
         self.assertEqual(tevent.tournament.name, t.name)

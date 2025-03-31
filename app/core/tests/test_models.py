@@ -38,6 +38,12 @@ class ModelsTests(TestCase):
     def setUp(self):
         self.user = create_user('test@example.com', 'pass123')
 
+
+    def test_base_player_automatic_creation(self):
+        """ Test the creation of a base player when a user is created """
+        print(self.user)
+        self.assertTrue(self.user.baseplayer)
+
     def test_create_new_tevent(self):
         """ Test creation of a tournament event """
         t = Tournament.objects.create(name='Ranking', teams_n=2)
@@ -56,7 +62,6 @@ class ModelsTests(TestCase):
     def test_create_new_player(self):
         """ Test creating a player for a Match """
         t = Tournament.objects.create(name='Escalerilla', teams_n=2)
-        BasePlayer.objects.create(user=self.user)
 
         players = BasePlayer.objects.all()
 
@@ -66,7 +71,7 @@ class ModelsTests(TestCase):
     def test_error_when_duplicating_base_players(self):
         """ Tests creating two players for the same user fails """
         t = Tournament.objects.create(name='Escalerilla', teams_n=2)
-        player1 = BasePlayer.objects.create(user=self.user)
+        player1 = self.user.baseplayer
         self.assertIn(player1, BasePlayer.objects.all())
 
         with self.assertRaises(IntegrityError):
@@ -76,7 +81,7 @@ class ModelsTests(TestCase):
         """ Tests creating a player for a specific tournament """
         t = Tournament.objects.create(name='Escalerilla', teams_n=2)
         self.user.name = 'Marcelo'
-        player = BasePlayer.objects.create(user=self.user)
+        player = self.user.baseplayer
         padel_player = TournamentPlayer.objects.create(tournament=t, player=player)
 
         all_tour_players = TournamentPlayer.objects.all()
@@ -89,10 +94,10 @@ class ModelsTests(TestCase):
     def create_new_team_and_assign_players(self):
         """ Test creating a new team and assigning players to it """
         t = Tournament.objects.create(name='Escalerilla', teams_n=2)
-        player1 = BasePlayer.objects.create(user=self.user)
+        player1 = self.user.baseplayer
         esc_player1 = TournamentPlayer.objects.create(tournament=t, player=player1)
         user2 = create_user('user2@example.com', 'pass123')
-        player2 = BasePlayer.objects.create(user=user2)
+        player2 = user2.baseplayer
         esc_player2 = TournamentPlayer.objects.create(tournament=t, player=player2)
 
         new_team = Team.objects.create()
