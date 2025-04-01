@@ -11,11 +11,31 @@ class TournamentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tournament
-        fields = ['id', 'name', 'description', 'players']
+        fields = ['id', 'name', 'description', 'players', 'teams_n']
         read_only_fields = ['id']
 
     # In the serializer we define the methods that will be available
+    def _create_tournament_players(self, tournament, players):
+        """ Helper function for creating TPlayers for the tournament """
+        for player in players:
+            TournamentPlayer.objects.create(tournament=tournament, player=player)
+            tournament.players.add(player)
 
+
+    def create(self, validated_data): #POST request
+        """ Create a tournament event """
+        players = validated_data.pop('players', None)
+        tournament = Tournament.objects.create( **validated_data)
+        self._create_tournament_players(tournament, players)
+        return tournament
+
+    def update(self, instance, validated_data): # PUT/PATCH request
+        players = validated_data.pop('players', None)
+
+        self._create_tournament_players(instance, players)
+        instance.save()
+
+        return instance
 
 class TournamentPlayerSerializer(serializers.ModelSerializer):
     """ Serializer for the tournament players"""

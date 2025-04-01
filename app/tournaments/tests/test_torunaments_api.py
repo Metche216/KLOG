@@ -86,15 +86,20 @@ class PrivateTournamentAPITests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
 
-    def test_create_new_tournament_fails_for_regular_users(self):
+    def test_create_new_tournament_with_players(self):
         """ Test create tournament for non-Admins fails """
+        bp1 = self.user.baseplayer
         payload = {
             'name': 'Ranking',
-            'description': 'A ranking method for sports tournaments'
+            'description': 'A ranking method for sports tournaments',
+            'players':[bp1.id],
+            'teams_n':2
         }
         res = self.client.post(TOURNAMENT_URL, payload, format='json')
-
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        tournament = Tournament.objects.first()
+        self.assertEqual(tournament.name, payload['name'])
+        self.assertEqual(tournament.players.count(), 1)
 
     def test_create_new_tevent(self):
         """ Test creation of a tournament event """
@@ -239,11 +244,10 @@ class PrivateTournamentAPITests(TestCase):
         }
         url = tdetail_url(t.id)
         res = self.client.patch(url, payload, format='json')
-        print(res.json())
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(t.players.all().count(), 2)
         all_Tplayers = TournamentPlayer.objects.all()
         self.assertEqual(all_Tplayers.count(), 2)
 
-    def test_limit_team_members_to_class_parameters(self):
-        """ Test the max_players complies with class parameter """
-        pass
+
+

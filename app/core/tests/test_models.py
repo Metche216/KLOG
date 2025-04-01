@@ -41,7 +41,6 @@ class ModelsTests(TestCase):
 
     def test_base_player_automatic_creation(self):
         """ Test the creation of a base player when a user is created """
-        print(self.user)
         self.assertTrue(self.user.baseplayer)
 
     def test_create_new_tevent(self):

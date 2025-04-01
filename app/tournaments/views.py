@@ -13,10 +13,6 @@ class TournamentsViewset(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def create(self):
-        """ Override Tournament creation for admin users only """
-        pass
-
     def get_permissions(self):
         """ Instantiates and returns the list of permissions that this view requires. """
         if self.action != 'list':

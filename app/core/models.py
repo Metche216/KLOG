@@ -47,7 +47,7 @@ class Tournament(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    players = models.ManyToManyField('BasePlayer')
+    players = models.ManyToManyField('BasePlayer', blank=True)
     teams_n = models.IntegerField()
 
     def __str__(self):
