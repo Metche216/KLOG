@@ -259,15 +259,24 @@ class PrivateMainTournamentAPITests(TestCase):
         self.userbp = self.user.baseplayer
         self.user2 = create_user('user2@example.com', 'textpass123', name='user2 name')
         self.user2bp = self.user2.baseplayer
-        tournament_data = {
-            'name': 'Main Tournament',
-            'description': 'The complex padel tournament',
-            'teams_n': 2,
-            'players':[self.userbp.id, self.user2bp.id]
-        }
-        self.tournament = TournamentSerializer(tournament_data).id
-        print(self.tournament)
+        tournament_data = {'players':[self.userbp.id, self.user2bp.id]}
+        self.t = create_tournament(name='Main Tournament', teams_n=2)
+        for player in tournament_data['players']:
+            TournamentPlayer.objects.create(tournament=self.t, player=BasePlayer.objects.get(id=player))
+            self.t.players.add(player)
 
     def test_retrieving_players_from_tevent(self):
         """ test that all TPlayers are retrieved from a tevent"""
-        pass
+
+        tevent = TEvent.objects.create(
+            tournament=self.t,
+            created_by=self.user,
+            name='Sabado 10',
+            sport='Padel',
+            start_date='2025-05-17',
+            end_date='2025-10-20',
+            )
+
+        self.assertIn(tevent, TEvent.objects.all())
+
+
