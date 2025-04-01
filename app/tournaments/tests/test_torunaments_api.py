@@ -264,6 +264,7 @@ class PrivateMainTournamentAPITests(TestCase):
         for player in tournament_data['players']:
             TournamentPlayer.objects.create(tournament=self.t, player=BasePlayer.objects.get(id=player))
             self.t.players.add(player)
+        self.client.force_authenticate(self.user)
 
     def test_retrieving_players_from_tevent(self):
         """ test that all TPlayers are retrieved from a tevent"""
@@ -279,4 +280,10 @@ class PrivateMainTournamentAPITests(TestCase):
 
         self.assertIn(tevent, TEvent.objects.all())
 
+        #Get a tevent detail and add all the Tournament Players created for the tournament
+
+        url = detail_url(tevent.id)
+
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
 
