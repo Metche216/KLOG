@@ -235,6 +235,7 @@ class PrivateTournamentAPITests(TestCase):
 
     def test_create_tournament_player_on_tournament_update(self):
         """ Test the creation of tournament players when baseplayer is added to tournament """
+
         user2 = create_user(email='user2@example.com', name='Matias', password='usaerpass123')
         t = create_tournament(name='Escalerilla', teams_n=2)
         bp1 = self.user.baseplayer
@@ -250,4 +251,23 @@ class PrivateTournamentAPITests(TestCase):
         self.assertEqual(all_Tplayers.count(), 2)
 
 
+class PrivateMainTournamentAPITests(TestCase):
+    """ Test the functionality for tevents in a especific tournament """
+    def setUp(self):
+        self.client = APIClient()
+        self.user = create_user('user@example.com', 'textpass123', name='user1 name')
+        self.userbp = self.user.baseplayer
+        self.user2 = create_user('user2@example.com', 'textpass123', name='user2 name')
+        self.user2bp = self.user2.baseplayer
+        tournament_data = {
+            'name': 'Main Tournament',
+            'description': 'The complex padel tournament',
+            'teams_n': 2,
+            'players':[self.userbp.id, self.user2bp.id]
+        }
+        self.tournament = TournamentSerializer(tournament_data).id
+        print(self.tournament)
 
+    def test_retrieving_players_from_tevent(self):
+        """ test that all TPlayers are retrieved from a tevent"""
+        pass
