@@ -2,7 +2,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from rest_framework import serializers
-from rest_framework.relations import PrimaryKeyRelatedField
+from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
 
 from core.models import Tournament, TEvent, TournamentPlayer, BasePlayer
 
@@ -39,6 +39,7 @@ class TournamentSerializer(serializers.ModelSerializer):
 
 class TournamentPlayerSerializer(serializers.ModelSerializer):
     """ Serializer for the tournament players"""
+
     class Meta:
         model = TournamentPlayer
         fields = ['id', 'player', 'tournament']
@@ -48,23 +49,21 @@ class TournamentPlayerSerializer(serializers.ModelSerializer):
 
 class TEventSerializer(serializers.ModelSerializer):
     """Tournament Events Serializer"""
-    players = PrimaryKeyRelatedField(
-        many=True,
-        queryset=TournamentPlayer.objects.all(),  # Importante: Define el queryset
-        required=False
-    )
-
+    players = StringRelatedField(many=True, read_only=True)
     class Meta:
         model = TEvent
         fields = ['id', 'name', 'sport', 'tournament', 'start_date','end_date', 'players']
         read_only_fields = ['id']
 
-    def _get_or_create_tournament_player(self, tevent, base_player):
-        """ Returns the tournament player for each base player invited """
-
-        player_obj, created = TournamentPlayer.objects.get_or_create(player=base_player, tournament=tevent.tournament)
-        tevent.players.add(player_obj)
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.method != 'GET':
+            self.fields['players'] = PrimaryKeyRelatedField(
+                many=True,
+                queryset=TournamentPlayer.objects.all(), #cambiado a BasePlayer
+                required=False
+            )
 
     def validate(self, data):
         """ Validate serializer data before processing """
@@ -87,8 +86,8 @@ class TEventSerializer(serializers.ModelSerializer):
         """ Update tevent """
         # Basic configuration for updating through serializer, loop through the values of the validated data and set them in the instance.
         players = validated_data.pop('players',None)
-        
-        # Logic to subscribe or remove player from tevent: if in list, remove, if not in list, add. 
+
+        # Logic to subscribe or remove player from tevent: if in list, remove, if not in list, add.
         if players is not None:
             for player in players:
                 if player not in instance.players.all():

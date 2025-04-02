@@ -196,6 +196,7 @@ class PrivateTournamentAPITests(TestCase):
         }
 
         url = detail_url(tevent.id)
+
         res = self.client.patch(url, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         tevent.refresh_from_db()
@@ -261,7 +262,9 @@ class PrivateMainTournamentAPITests(TestCase):
         self.userbp = self.user.baseplayer
         self.user2 = create_user('user2@example.com', 'textpass123', name='user2 name')
         self.user2bp = self.user2.baseplayer
-        tournament_data = {'players':[self.userbp.id, self.user2bp.id]}
+        self.user3 = create_user('user3@example.com', 'textpass123', name='user3 name')
+        self.user3bp = self.user3.baseplayer
+        tournament_data = {'players':[self.userbp.id, self.user2bp.id, self.user3bp.id]}
         self.t = create_tournament(name='Main Tournament', teams_n=2)
         for player in tournament_data['players']:
             TournamentPlayer.objects.create(tournament=self.t, player=BasePlayer.objects.get(id=player))
@@ -274,16 +277,28 @@ class PrivateMainTournamentAPITests(TestCase):
         tevent = TEvent.objects.create(
             tournament=self.t,
             created_by=self.user,
-            name='Sabado 10',
+            name='Sabado10',
             sport='Padel',
             start_date='2025-05-17',
             end_date='2025-10-20',
             )
-
+        tplayer1 = TournamentPlayer.objects.get(player=self.userbp)
+        tplayer2 = TournamentPlayer.objects.get(player=self.user2bp)
+        tevent.players.add(tplayer1)
+        tevent.players.add(tplayer2)
         self.assertIn(tevent, TEvent.objects.all())
 
         url = detail_url(tevent.id)
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(tevent.tournament.players.count(), 3)
+        data = res.json()
+        self.assertIn(tplayer1.player.name, data['players'])
+        self.assertIn(tplayer2.player.name, data['players'])
+        self.assertNotIn('user3 name',data['players'])
+
+    def test_custom_endpoint_for_joining_tevent(self):
+        """ Test joining or removing tournamentPlayer from tevent through Join_event API """
+        pass
 
 

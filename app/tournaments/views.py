@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
@@ -33,3 +34,22 @@ class TEventViewset(viewsets.ModelViewSet):
         """ Override the default ModelViewSet create method """
         serializer.save(created_by=self.request.user)
 
+    @action(detail=True, methods=['PATCH'])
+    def join_event(self, request, pk=None):
+        """ Add or remove a player from the tournament event """
+        tevent = self.get_object()
+        serializer = self.get_serializer(tevent, data=request.data, partial=True, context={'request': request})
+
+        user = request.user
+        base_player = BasePlayer.objects.get(user=user)
+
+
+        if base_player in tevent.players.all():
+            tevent.players.remove(base_player)
+        else:
+            tevent.players.add(base_player)
+        tevent.save()
+
+
+        serializer = self.get_serializer(tevent)
+        return Response(serializer.data)
