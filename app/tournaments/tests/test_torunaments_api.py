@@ -180,6 +180,8 @@ class PrivateTournamentAPITests(TestCase):
         user2 = create_user(email='test2@example.com', name='Rolandito', password='abc123pass')
         bp2 = user2.baseplayer
         bp1 = self.user.baseplayer
+        tplayer1 = TournamentPlayer.objects.create(tournament=tevent.tournament, player=bp1)
+        tplayer2 = TournamentPlayer.objects.create(tournament=tevent.tournament, player=bp2)
         t = Tournament.objects.first()
         player_list = [bp1, bp2]
         for player in player_list:
@@ -190,7 +192,7 @@ class PrivateTournamentAPITests(TestCase):
 
         payload = {
             'tournament': t.id,
-            'players': [bp1.id, bp2.id]
+            'players': [tplayer1.id, tplayer2.id]
         }
 
         url = detail_url(tevent.id)
@@ -223,7 +225,7 @@ class PrivateTournamentAPITests(TestCase):
 
         payload = {
             'tournament': t.id,
-            'players': [bp1.id, bp2.id]
+            'players': [tplayer.id, tplayer2.id]
         }
 
         url = detail_url(tevent.id)
@@ -231,7 +233,7 @@ class PrivateTournamentAPITests(TestCase):
 
         self.assertEqual(res.status_code, 200)
         tevent.refresh_from_db()
-        self.assertEqual(tevent.players.all().count(), 2)
+        self.assertEqual(tevent.players.all().count(), 1)
 
     def test_create_tournament_player_on_tournament_update(self):
         """ Test the creation of tournament players when baseplayer is added to tournament """
@@ -280,10 +282,8 @@ class PrivateMainTournamentAPITests(TestCase):
 
         self.assertIn(tevent, TEvent.objects.all())
 
-        #Get a tevent detail and add all the Tournament Players created for the tournament
-
         url = detail_url(tevent.id)
-
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
+
 
