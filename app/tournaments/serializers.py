@@ -50,7 +50,7 @@ class TEventSerializer(serializers.ModelSerializer):
     """Tournament Events Serializer"""
     players = PrimaryKeyRelatedField(
         many=True,
-        queryset=BasePlayer.objects.all(),  # Importante: Define el queryset
+        queryset=TournamentPlayer.objects.all(),  # Importante: Define el queryset
         required=False
     )
 
@@ -87,11 +87,14 @@ class TEventSerializer(serializers.ModelSerializer):
         """ Update tevent """
         # Basic configuration for updating through serializer, loop through the values of the validated data and set them in the instance.
         players = validated_data.pop('players',None)
-
+        
+        # Logic to subscribe or remove player from tevent: if in list, remove, if not in list, add. 
         if players is not None:
-            instance.players.clear()
             for player in players:
-                self._get_or_create_tournament_player(instance, player)
+                if player not in instance.players.all():
+                    instance.players.add(player)
+                else:
+                    instance.players.remove(player)
 
 
         for attr, value in validated_data.items():
