@@ -270,11 +270,7 @@ class PrivateMainTournamentAPITests(TestCase):
             TournamentPlayer.objects.create(tournament=self.t, player=BasePlayer.objects.get(id=player))
             self.t.players.add(player)
         self.client.force_authenticate(self.user)
-
-    def test_retrieving_players_from_tevent(self):
-        """ test that all TPlayers are retrieved from a tevent"""
-
-        tevent = TEvent.objects.create(
+        self.tevent = TEvent.objects.create(
             tournament=self.t,
             created_by=self.user,
             name='Sabado10',
@@ -282,16 +278,21 @@ class PrivateMainTournamentAPITests(TestCase):
             start_date='2025-05-17',
             end_date='2025-10-20',
             )
+
+    def test_retrieving_players_from_tevent(self):
+        """ test that all TPlayers are retrieved from a tevent"""
+
+
         tplayer1 = TournamentPlayer.objects.get(player=self.userbp)
         tplayer2 = TournamentPlayer.objects.get(player=self.user2bp)
-        tevent.players.add(tplayer1)
-        tevent.players.add(tplayer2)
-        self.assertIn(tevent, TEvent.objects.all())
+        self.tevent.players.add(tplayer1)
+        self.tevent.players.add(tplayer2)
+        self.assertIn(self.tevent, TEvent.objects.all())
 
-        url = detail_url(tevent.id)
+        url = detail_url(self.tevent.id)
         res = self.client.get(url)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(tevent.tournament.players.count(), 3)
+        self.assertEqual(self.tevent.tournament.players.count(), 3)
         data = res.json()
         self.assertIn(tplayer1.player.name, data['players'])
         self.assertIn(tplayer2.player.name, data['players'])
@@ -299,6 +300,12 @@ class PrivateMainTournamentAPITests(TestCase):
 
     def test_custom_endpoint_for_joining_tevent(self):
         """ Test joining or removing tournamentPlayer from tevent through Join_event API """
-        pass
+        url = reverse('TOURNAMENT:tevent-join_event', kwargs={'pk': self.tevent.id})
+
+        # Inicialmente, el jugador no está unido al evento
+        self.assertEqual(self.tevent.players.count(), 0)
+
+        res = self.client.patch(url)
+
 
 
