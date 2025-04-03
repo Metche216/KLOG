@@ -300,12 +300,13 @@ class PrivateMainTournamentAPITests(TestCase):
 
     def test_custom_endpoint_for_joining_tevent(self):
         """ Test joining or removing tournamentPlayer from tevent through Join_event API """
-        url = reverse('TOURNAMENT:tevent-join_event', kwargs={'pk': self.tevent.id})
-
-        # Inicialmente, el jugador no está unido al evento
+        url = reverse('tournament:tevent-join-event', kwargs={'pk': self.tevent.id})
+        print(url)
         self.assertEqual(self.tevent.players.count(), 0)
 
         res = self.client.patch(url)
+
+        self.assertEqual(self.tevent.players.count(), 1)
 
 
 

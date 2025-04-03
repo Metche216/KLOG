@@ -1,11 +1,12 @@
 from rest_framework import viewsets
+from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from tournaments.serializers import TournamentSerializer, TEventSerializer
 
-from core.models import Tournament, TEvent
+from core.models import Tournament, TEvent, BasePlayer, TournamentPlayer
 
 class TournamentsViewset(viewsets.ModelViewSet):
     """ Viewset for the Tournaments API - allows all request methods """
@@ -35,6 +36,8 @@ class TEventViewset(viewsets.ModelViewSet):
         serializer.save(created_by=self.request.user)
 
     @action(detail=True, methods=['PATCH'])
+    # path is created by hyphonated view's name > app:router-join-event ::: in stead of app:router-join_event
+    # (url_path and url_name are valid params)
     def join_event(self, request, pk=None):
         """ Add or remove a player from the tournament event """
         tevent = self.get_object()
@@ -42,14 +45,19 @@ class TEventViewset(viewsets.ModelViewSet):
 
         user = request.user
         base_player = BasePlayer.objects.get(user=user)
+        tplayer = TournamentPlayer.objects.get(player=base_player)
 
 
-        if base_player in tevent.players.all():
-            tevent.players.remove(base_player)
+        if tplayer in tevent.players.all():
+            tevent.players.remove(tplayer)
         else:
-            tevent.players.add(base_player)
+            tevent.players.add(tplayer)
         tevent.save()
 
 
         serializer = self.get_serializer(tevent)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['PATCH'])
+    def close_tevent(self, request, pk=None):
+        pass
