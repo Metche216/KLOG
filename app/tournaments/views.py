@@ -59,5 +59,9 @@ class TEventViewset(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['PATCH'])
-    def close_tevent(self, request, pk=None):
-        pass
+    def start_tevent(self, request, pk=None):
+        tevent = self.get_object()
+        serializer = self.get_serializer(tevent, data=request.data, partial=True, context={'request': request})
+        tevent.advance()
+        serializer = self.get_serializer(tevent)
+        return Response(serializer.data)

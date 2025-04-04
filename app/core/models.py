@@ -73,6 +73,16 @@ class TEvent(models.Model):
     def __str__(self):
         return f'{self.name} - ({self.tournament.name})'
 
+    def advance(self):
+        """ Move one step forward in tevent status """
+        if self.status == 'open':
+            self.status = 'in_progress'
+        elif self.status == 'in_progress':
+            self.status = 'completed'
+        else:
+            pass
+
+        self.save()
 
 class BasePlayer(models.Model):
     """ A model for a tournament general player """

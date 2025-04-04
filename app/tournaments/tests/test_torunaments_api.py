@@ -301,12 +301,25 @@ class PrivateMainTournamentAPITests(TestCase):
     def test_custom_endpoint_for_joining_tevent(self):
         """ Test joining or removing tournamentPlayer from tevent through Join_event API """
         url = reverse('tournament:tevent-join-event', kwargs={'pk': self.tevent.id})
-        print(url)
+        self.assertEqual(self.tevent.players.count(), 0)
+        res = self.client.patch(url)
+        self.assertEqual(self.tevent.players.count(), 1)
+        res = self.client.patch(url)
         self.assertEqual(self.tevent.players.count(), 0)
 
+    def test_tevent_status_progression(self):
+        """ Tests that event status progresses properly """
+        url = reverse('tournament:tevent-start-tevent', kwargs={'pk': self.tevent.id})
         res = self.client.patch(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.tevent.refresh_from_db()
+        self.assertEqual(self.tevent.status, 'in_progress')
+        res = self.client.patch(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.tevent.refresh_from_db()
+        self.assertEqual(self.tevent.status, 'completed')
 
-        self.assertEqual(self.tevent.players.count(), 1)
-
+    def test_create_teams_accordingly(self):
+        """ Test the creation of teams inside the tevent """
 
 
