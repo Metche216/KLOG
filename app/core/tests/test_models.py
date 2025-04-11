@@ -12,25 +12,46 @@ from core.models import (
     Team
     )
 
-def create_user(email, password):
-    """ Create and return a new user """
-    return get_user_model().objects.create_user(email=email, password=password)
 
-def create_tevent(user, **params ):
+def create_user(email, password,**kwargs):
+    """ Create and return a new user """
+    return get_user_model().objects.create_user(email=email, password=password, **kwargs)
+
+def create_tevent(user, t=None, **params ):
     """ Create and return a tournament event instance """
-    tournament = Tournament.objects.create(name='Ranking', teams_n=2)
+    if not t:
+        t = Tournament.objects.create(name='Ranking', teams_n=2)
+
     defaults = {
         'name': 'Padel Las Palmas',
         'sport': 'Padel',
         'start_date': '2025-05-17',
         'end_date': '2025-10-25',
         'status': 'open',
-        'tournament': tournament,
+        'tournament': t,
     }
 
     defaults.update(params)
     tevent = TEvent.objects.create(created_by=user, **defaults)
     return tevent
+
+def create_tournament_tevent_and_team(user):
+    """ Create one team for a tevent with two players """
+    t = Tournament.objects.create(name='Escalerilla', teams_n=2)
+    player1 = user.baseplayer
+    esc_player1 = TournamentPlayer.objects.create(tournament=t, player=player1)
+    user2 = create_user('user2@example.com', 'pass123')
+    player2 = user2.baseplayer
+    esc_player2 = TournamentPlayer.objects.create(tournament=t, player=player2)
+
+    tevent = create_tevent(user, t)
+
+    new_team = Team.objects.create(tevent=tevent)
+    players = [esc_player1, esc_player2]
+    for player in players:
+        new_team.players.add(player)
+    new_team.save()
+    return new_team
 
 class ModelsTests(TestCase):
     """ Test suite for the app models """
@@ -90,23 +111,23 @@ class ModelsTests(TestCase):
 
 
 
-    def create_new_team_and_assign_players(self):
+    def test_create_new_team_and_assign_players(self):
         """ Test creating a new team and assigning players to it """
-        t = Tournament.objects.create(name='Escalerilla', teams_n=2)
-        player1 = self.user.baseplayer
-        esc_player1 = TournamentPlayer.objects.create(tournament=t, player=player1)
-        user2 = create_user('user2@example.com', 'pass123')
-        player2 = user2.baseplayer
-        esc_player2 = TournamentPlayer.objects.create(tournament=t, player=player2)
-
-        new_team = Team.objects.create()
-        players = [esc_player1, esc_player2]
-        for player in players:
-            new_team.players.add(player)
-        new_team.save()
-
+        new_team = create_tournament_tevent_and_team(self.user)
         teams = Team.objects.all()
-
         self.assertEqual(new_team.players.count(), 2)
         self.assertEqual(teams.count(), 1)
         self.assertEqual(teams.first().players.count(),2)
+
+    def test_limit_for_team_players(self):
+        """ Test the ammount of players is limmited to the tournament limit """
+        new_team = create_tournament_tevent_and_team(self.user)
+        t = Tournament.objects.get(id=new_team.tevent.tournament.id)
+        user_3 = create_user('user3@example.com', 'thapass123', name='Jhonny')
+        extra_player = TournamentPlayer.objects.create(tournament=t, player=user_3.baseplayer)
+        with self.assertRaises():
+            pass
+
+
+
+
