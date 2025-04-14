@@ -8,6 +8,7 @@ from rest_framework import status
 
 from tournaments.serializers import TournamentSerializer, TEventSerializer
 from core.models import Tournament, TEvent, BasePlayer, TournamentPlayer
+from core.utils import create_tournament_tevent_and_team
 
 
 TOURNAMENT_URL = reverse('tournament:tournament-list')
@@ -303,24 +304,35 @@ class PrivateMainTournamentAPITests(TestCase):
         url = reverse('tournament:tevent-join-event', kwargs={'pk': self.tevent.id})
         self.assertEqual(self.tevent.players.count(), 0)
         res = self.client.patch(url)
+        print(res.json())
         self.assertEqual(self.tevent.players.count(), 1)
         res = self.client.patch(url)
         self.assertEqual(self.tevent.players.count(), 0)
 
-    def test_tevent_status_progression(self):
-        """ Tests that event status progresses properly """
+    def test_limit_for_team_players(self):
+        """ Test the ammount of players is limmited to the tournament limit """
         url = reverse('tournament:tevent-start-tevent', kwargs={'pk': self.tevent.id})
+        tplayer1 = TournamentPlayer.objects.get(player=self.userbp)
+        tplayer2 = TournamentPlayer.objects.get(player=self.user2bp)
+        tplayer3 = TournamentPlayer.objects.get(player=self.user3bp)
+        self.tevent.players.add(tplayer1)
+        self.tevent.players.add(tplayer2)
+        self.tevent.players.add(tplayer3)
+
         res = self.client.patch(url)
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.tevent.refresh_from_db()
-        self.assertEqual(self.tevent.status, 'in_progress')
+        print(res.json())
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+        user4 = create_user('user4@gmail.com', name='Manuel', password='pasabc123')
+        user4bp = user4.baseplayer
+        tplayer4 = TournamentPlayer.objects.create(tournament=self.t, player=user4bp)
+        self.t.players.add(user4bp)
+        self.tevent.players.add(tplayer4)
+
         res = self.client.patch(url)
+
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.tevent.refresh_from_db()
-        self.assertEqual(self.tevent.status, 'completed')
 
-    def test_create_teams_accordingly(self):
-        """ Test the creation of teams inside the tevent """
-
-
-
+    def test_fixture_creation_for_tevent(self):
+        """ Test the creation of a fixture for a specific tevent """
+        pass

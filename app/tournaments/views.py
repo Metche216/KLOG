@@ -1,4 +1,6 @@
-from rest_framework import viewsets
+from django.utils.translation import gettext as _
+
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.authentication import TokenAuthentication
@@ -61,7 +63,12 @@ class TEventViewset(viewsets.ModelViewSet):
     @action(detail=True, methods=['PATCH'])
     def start_tevent(self, request, pk=None):
         tevent = self.get_object()
-        serializer = self.get_serializer(tevent, data=request.data, partial=True, context={'request': request})
-        tevent.advance()
-        serializer = self.get_serializer(tevent)
-        return Response(serializer.data)
+
+        if tevent.players.count() > 0 and tevent.players.count() % 4 == 0:
+            serializer = self.get_serializer(tevent, data=request.data, partial=True, context={'request': request})
+            tevent.advance()
+            serializer = self.get_serializer(tevent)
+        else:
+            return Response(_('The total number of players must be a multiple of 4'), status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)

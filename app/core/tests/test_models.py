@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now as tzn
 from django.db.utils import IntegrityError
+from core.utils import create_tournament_tevent_and_team
 from core.models import (
     Tournament,
     TEvent,
@@ -34,24 +35,6 @@ def create_tevent(user, t=None, **params ):
     defaults.update(params)
     tevent = TEvent.objects.create(created_by=user, **defaults)
     return tevent
-
-def create_tournament_tevent_and_team(user):
-    """ Create one team for a tevent with two players """
-    t = Tournament.objects.create(name='Escalerilla', teams_n=2)
-    player1 = user.baseplayer
-    esc_player1 = TournamentPlayer.objects.create(tournament=t, player=player1)
-    user2 = create_user('user2@example.com', 'pass123')
-    player2 = user2.baseplayer
-    esc_player2 = TournamentPlayer.objects.create(tournament=t, player=player2)
-
-    tevent = create_tevent(user, t)
-
-    new_team = Team.objects.create(tevent=tevent)
-    players = [esc_player1, esc_player2]
-    for player in players:
-        new_team.players.add(player)
-    new_team.save()
-    return new_team
 
 class ModelsTests(TestCase):
     """ Test suite for the app models """
@@ -119,14 +102,7 @@ class ModelsTests(TestCase):
         self.assertEqual(teams.count(), 1)
         self.assertEqual(teams.first().players.count(),2)
 
-    def test_limit_for_team_players(self):
-        """ Test the ammount of players is limmited to the tournament limit """
-        new_team = create_tournament_tevent_and_team(self.user)
-        t = Tournament.objects.get(id=new_team.tevent.tournament.id)
-        user_3 = create_user('user3@example.com', 'thapass123', name='Jhonny')
-        extra_player = TournamentPlayer.objects.create(tournament=t, player=user_3.baseplayer)
-        with self.assertRaises():
-            pass
+
 
 
 
