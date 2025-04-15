@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
-from tournaments.serializers import TournamentSerializer, TEventSerializer
+from tournaments.serializers import TournamentSerializer, TEventSerializer, TournamentPlayerSerializer
 
 from core.models import Tournament, TEvent, BasePlayer, TournamentPlayer
 
@@ -62,6 +62,7 @@ class TEventViewset(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['PATCH'])
     def start_tevent(self, request, pk=None):
+        """ Check the ammount of players is according to the tournament standards and advances tevent status """
         tevent = self.get_object()
 
         if tevent.players.count() > 0 and tevent.players.count() % 4 == 0:
@@ -72,3 +73,14 @@ class TEventViewset(viewsets.ModelViewSet):
             return Response(_('The total number of players must be a multiple of 4'), status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['GET','POST'])
+    def team_build(self, request, pk=None):
+        """ Create teams from the players received from the frontend """
+        tevent = self.get_object()
+        tevent_players = tevent.players
+        if request.method == 'POST':
+            return Response('Teams built', status=status.HTTP_200_OK)
+        else:
+            serializer = TournamentPlayerSerializer(tevent_players, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)

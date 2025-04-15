@@ -7,7 +7,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 
 from tournaments.serializers import TournamentSerializer, TEventSerializer
-from core.models import Tournament, TEvent, BasePlayer, TournamentPlayer
+from core.models import Tournament, TEvent, BasePlayer, TournamentPlayer, Team
 from core.utils import create_tournament_tevent_and_team
 
 
@@ -304,7 +304,6 @@ class PrivateMainTournamentAPITests(TestCase):
         url = reverse('tournament:tevent-join-event', kwargs={'pk': self.tevent.id})
         self.assertEqual(self.tevent.players.count(), 0)
         res = self.client.patch(url)
-        print(res.json())
         self.assertEqual(self.tevent.players.count(), 1)
         res = self.client.patch(url)
         self.assertEqual(self.tevent.players.count(), 0)
@@ -320,7 +319,7 @@ class PrivateMainTournamentAPITests(TestCase):
         self.tevent.players.add(tplayer3)
 
         res = self.client.patch(url)
-        print(res.json())
+
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
 
         user4 = create_user('user4@gmail.com', name='Manuel', password='pasabc123')
@@ -335,4 +334,31 @@ class PrivateMainTournamentAPITests(TestCase):
 
     def test_fixture_creation_for_tevent(self):
         """ Test the creation of a fixture for a specific tevent """
-        pass
+        tplayer1 = TournamentPlayer.objects.get(player=self.userbp)
+        tplayer2 = TournamentPlayer.objects.get(player=self.user2bp)
+        tplayer3 = TournamentPlayer.objects.get(player=self.user3bp)
+        self.tevent.players.add(tplayer1)
+        self.tevent.players.add(tplayer2)
+        self.tevent.players.add(tplayer3)
+        user4 = create_user('user4@gmail.com', name='Manuel', password='pasabc123')
+        user4bp = user4.baseplayer
+        tplayer4 = TournamentPlayer.objects.create(tournament=self.t, player=user4bp)
+        self.t.players.add(user4bp)
+        self.tevent.players.add(tplayer4)
+
+        payload = {
+            '1': [tplayer1, tplayer4],
+            '2': [tplayer2, tplayer3]
+        }
+
+        #create teams
+        url = reverse('tournament:tevent-team-build', args={self.tevent.id})
+
+        res = self.client.get(url, payload)
+        all_teams = Team.objects.all()
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(all_teams.count(), 2)
+
+
+
+
