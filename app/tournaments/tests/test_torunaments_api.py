@@ -347,15 +347,16 @@ class PrivateMainTournamentAPITests(TestCase):
         self.tevent.players.add(tplayer4)
 
         payload = {
-            '1': [tplayer1, tplayer4],
-            '2': [tplayer2, tplayer3]
+            '1': [tplayer1.id, tplayer4.id],
+            '2': [tplayer2.id, tplayer3.id,tplayer1.id]
         }
 
         #create teams
         url = reverse('tournament:tevent-team-build', args={self.tevent.id})
 
-        res = self.client.get(url, payload)
+        res = self.client.post(url, payload, format='json')
         all_teams = Team.objects.all()
+        print(res.json())
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(all_teams.count(), 2)
 

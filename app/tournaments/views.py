@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from tournaments.serializers import TournamentSerializer, TEventSerializer, TournamentPlayerSerializer
 
-from core.models import Tournament, TEvent, BasePlayer, TournamentPlayer
+from core.models import Tournament, TEvent, BasePlayer, TournamentPlayer, Team
 
 class TournamentsViewset(viewsets.ModelViewSet):
     """ Viewset for the Tournaments API - allows all request methods """
@@ -80,7 +80,20 @@ class TEventViewset(viewsets.ModelViewSet):
         tevent = self.get_object()
         tevent_players = tevent.players
         if request.method == 'POST':
-            return Response('Teams built', status=status.HTTP_200_OK)
+            teams = request.data
+            if not isinstance(teams, dict):
+                return Response({"error": _("player_ids must be a list")}, status=status.HTTP_400_BAD_REQUEST)
+            for team_name,players in teams.items():
+                if len(players) % 2 != 0:
+                    return Response({"error": _("Number of players must be even to form teams")}, status=status.HTTP_400_BAD_REQUEST)
+                player_a = TournamentPlayer.objects.get(id=players[0], tournament=tevent.tournament)
+                player_b = TournamentPlayer.objects.get(id=players[1], tournament=tevent.tournament)
+                new_team = Team.objects.create(name=team_name,tevent=tevent)
+                new_team.players.add(player_a)
+                new_team.players.add(player_b)
+                new_team.save()
+
+            return Response('Teams built', status=status.HTTP_201_CREATED)
         else:
             serializer = TournamentPlayerSerializer(tevent_players, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
