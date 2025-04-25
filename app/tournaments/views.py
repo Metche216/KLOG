@@ -93,7 +93,7 @@ class TEventViewset(viewsets.ModelViewSet):
                 new_team.players.add(player_b)
                 new_team.save()
 
-            return Response('Teams built', status=status.HTTP_201_CREATED)
+            return Response(_('Teams built successfully!'), status=status.HTTP_201_CREATED)
         else:
             serializer = TournamentPlayerSerializer(tevent_players, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)

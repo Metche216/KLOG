@@ -40,7 +40,7 @@ class ModelsTests(TestCase):
     """ Test suite for the app models """
 
     def setUp(self):
-        self.user = create_user('test@example.com', 'pass123')
+        self.user = create_user('test@example.com', 'pass123', name='Juancito')
 
 
     def test_base_player_automatic_creation(self):
@@ -93,7 +93,6 @@ class ModelsTests(TestCase):
         self.assertEqual(self.user.name, padel_player.player.name)
 
 
-
     def test_create_new_team_and_assign_players(self):
         """ Test creating a new team and assigning players to it """
         new_team = create_tournament_tevent_and_team(self.user)
@@ -101,6 +100,14 @@ class ModelsTests(TestCase):
         self.assertEqual(new_team.players.count(), 2)
         self.assertEqual(teams.count(), 1)
         self.assertEqual(teams.first().players.count(),2)
+
+    def test_tournament_player_has_glicko_rank(self):
+        """ Test that player is ranked by glicko system in ranking tournament """
+
+        new_team = create_tournament_tevent_and_team(self.user)
+        tevent = new_team.tevent
+        for player in tevent.players.all():
+            self.assertNotEqual(player.glicko_rating, 0)
 
 
 

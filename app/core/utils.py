@@ -8,11 +8,17 @@ def create_tournament_tevent_and_team(user):
     t = Tournament.objects.create(name='Escalerilla', teams_n=2)
     player1 = user.baseplayer
     esc_player1 = TournamentPlayer.objects.create(tournament=t, player=player1)
-    user2 = create_user('user2@example.com', 'pass123')
+    user2 = create_user('user2@example.com', 'pass123', name='Pablito')
     player2 = user2.baseplayer
     esc_player2 = TournamentPlayer.objects.create(tournament=t, player=player2)
 
     tevent = create_tevent(user, t)
+    try:
+        tevent.players.add(esc_player1)
+        tevent.players.add(esc_player2)
+        tevent.save()
+    except:
+        print('couldnt add player')
 
     new_team = Team.objects.create(tevent=tevent)
     players = [esc_player1, esc_player2]

@@ -348,7 +348,7 @@ class PrivateMainTournamentAPITests(TestCase):
 
         payload = {
             '1': [tplayer1.id, tplayer4.id],
-            '2': [tplayer2.id, tplayer3.id,tplayer1.id]
+            '2': [tplayer2.id, tplayer3.id]
         }
 
         #create teams
@@ -356,7 +356,6 @@ class PrivateMainTournamentAPITests(TestCase):
 
         res = self.client.post(url, payload, format='json')
         all_teams = Team.objects.all()
-        print(res.json())
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(all_teams.count(), 2)
 

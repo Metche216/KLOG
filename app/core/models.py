@@ -8,6 +8,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+
 class UserManager(BaseUserManager):
     """ Manager for the User Model """
     def create_user(self, email, password=None, **extra_fields):
@@ -98,9 +99,13 @@ class BasePlayer(models.Model):
 
 
 class TournamentPlayer(models.Model):
-    """ A generic model for the tournament players """
+    """ A model for the tournament players of the ranking tournament """
     player = models.ForeignKey('BasePlayer', on_delete=models.CASCADE, related_name='tplayer')
     tournament = models.ForeignKey('Tournament', on_delete=models.CASCADE)
+    glicko_rating = models.FloatField(default=1500.0)
+    # glicko_rd = models.FloatField(default=350.0)
+    # glicko_volatility = models.FloatField(default=0.06)
+    # last_played = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('player', 'tournament')
